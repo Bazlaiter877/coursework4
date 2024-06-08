@@ -1,22 +1,31 @@
 import json
 from pathlib import Path
-
 from .base import FileConnector
 from ..dto import Vacancy, Salary
 
 
 class JSONConnector(FileConnector):
 
-    def __init__(self, file_path: Path):
-        self.file_path = file_path
+    def __init__(self, file_path: Path = Path('vacancies.json')):
+        self.__file_path = file_path
         self.encoding = 'utf-8'
 
+    @property
+    def file_path(self):
+        return self.__file_path
+
+    @file_path.setter
+    def file_path(self, value: Path):
+        if not isinstance(value, Path):
+            raise ValueError("File path must be a Path object.")
+        self.__file_path = value
+
     def get_vacancies(self) -> list[Vacancy]:
-        if not self.file_path.exists():
+        if not self.__file_path.exists():
             return []
 
         vacancies = []
-        with self.file_path.open(encoding=self.encoding) as file:
+        with self.__file_path.open(encoding=self.encoding) as file:
             for item in json.load(file):
                 vacancy = self._parse_dict_to_vacancy(item)
                 vacancies.append(vacancy)
@@ -37,7 +46,7 @@ class JSONConnector(FileConnector):
 
     def _save(self, *vacancies: Vacancy) -> None:
         data = [self._parse_vacancy_to_dict(vac) for vac in vacancies]
-        with self.file_path.open('w', encoding=self.encoding) as f:
+        with self.__file_path.open('w', encoding=self.encoding) as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
 
     @staticmethod
